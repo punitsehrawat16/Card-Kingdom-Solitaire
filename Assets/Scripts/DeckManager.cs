@@ -22,15 +22,26 @@ public class DeckManager : MonoBehaviour
     [SerializeField] private GameObject cardHolder;
     [SerializeField] private GameObject cardPrefab;
 
-    [Header("Center Card")] [SerializeField]
-    private CardData centerCard;
+    
+    [Header("Center Card")] 
+    [SerializeField] private CardData centerCard;
     [SerializeField] private Transform centerCardPos;
+
+    
+    [Header("Player Card")] 
+    [SerializeField] private CardData playerDrawnCard;
+    [SerializeField] private Transform[] playerCardPos;
+    
     
     private void Start()
     {
+        deckCardsData.Clear();
+        cardsInDeck.Clear();
+        
         CreateDeck();
         ShufflingDeck();
         CenterCard();
+        DrawPlayerCards();
     }
 
     private void CreateDeck()
@@ -58,42 +69,45 @@ public class DeckManager : MonoBehaviour
             }
         }
     }
-
+    
     private void ShufflingDeck()
     {
-        // random no generation for basically how much cards we need to shuffle 
-        // temp index and then i would be taking a random index and both them would be replaced and then again same 
-
-        int shuffleRatio = Random.Range(21, 46);
-        int shuffleIndex=0;
-        GameObject temp = new GameObject();
-        temp.name = "Temp";
-        while (shuffleIndex<shuffleRatio)
+        for (int i = deckCardsData.Count - 1; i > 0; i--)
         {
-            int cardToBeReplaced = Random.Range(27, 51);
-            int cardReplaceWithWhom = Random.Range(0, 27);
-            CardData tempData = new CardData();
-            tempData = deckCardsData[cardToBeReplaced];
-            deckCardsData[cardToBeReplaced] = deckCardsData[cardReplaceWithWhom];
-            deckCardsData[cardReplaceWithWhom] = tempData;
-            shuffleIndex++;
+            int randomIndex = Random.Range(0, i + 1);
+
+            CardData temp = deckCardsData[i];
+            deckCardsData[i] = deckCardsData[randomIndex];
+            deckCardsData[randomIndex] = temp;
+
+            GameObject tempObj = cardsInDeck[i];
+            cardsInDeck[i] = cardsInDeck[randomIndex];
+            cardsInDeck[randomIndex] = tempObj;
         }
+        Debug.Log(" Top Card After Shuffle: "+deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
+
     }
 
     private void CenterCard()
+    { 
+        Debug.Log(deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
+        centerCard = deckCardsData[0];
+        deckCardsData.RemoveAt(0);
+       
+        cardsInDeck[0].transform.position = centerCardPos.position;
+        cardsInDeck.RemoveAt(0);
+    }
+
+    private void DrawPlayerCards()
     {
-        int index = Random.Range(0, 52);
-        centerCard.Rank = deckCardsData[index].Rank;
-        centerCard.Suits = deckCardsData[index].Suits;
-        
-        foreach (var a in cardsInDeck)
+        for (int i = 0; i < 5; i++)
         {
-            Card card = a.GetComponent<Card>();
-            if (card.cardData.Rank == centerCard.Rank && card.cardData.Suits == centerCard.Suits)
-            {
-                a.transform.position = centerCardPos.position;
-                break;
-            }
+            Debug.Log(deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
+            playerDrawnCard = deckCardsData[0];
+            deckCardsData.RemoveAt(0);
+
+            cardsInDeck[0].transform.position = playerCardPos[i].position;
+            cardsInDeck.RemoveAt(0);
         }
     }
 }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Shuffle : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
     private void DeckShuffling()
     {
