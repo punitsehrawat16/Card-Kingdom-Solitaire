@@ -21,16 +21,6 @@ public class DeckManager : MonoBehaviour
     [Header("Cards Relevant")]
     [SerializeField] private GameObject cardHolder;
     [SerializeField] private GameObject cardPrefab;
-
-    
-    [Header("Center Card")] 
-    [SerializeField] private CardData centerCard;
-    [SerializeField] private Transform centerCardPos;
-
-    
-    [Header("Player Card")] 
-    [SerializeField] private CardData playerDrawnCard;
-    [SerializeField] private Transform[] playerCardPos;
     
     
     private void Start()
@@ -38,12 +28,14 @@ public class DeckManager : MonoBehaviour
         deckCardsData.Clear();
         cardsInDeck.Clear();
         
-        CreateDeck();
-        ShufflingDeck();
-        CenterCard();
-        DrawPlayerCards();
+        
     }
 
+    public void CreateAndShuffleDeck()
+    {
+        CreateDeck();
+        ShufflingDeck();
+    }
     private void CreateDeck()
     {
         int cardIndex = 0; // for sprites 
@@ -88,26 +80,15 @@ public class DeckManager : MonoBehaviour
 
     }
 
-    private void CenterCard()
-    { 
-        Debug.Log(deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
-        centerCard = deckCardsData[0];
+    public Card DrawTopCard(Transform pos)
+    {
+        //CardData cardData = deckCardsData[0];
+        var card = cardsInDeck[0].GetComponent<Card>();
         deckCardsData.RemoveAt(0);
        
-        cardsInDeck[0].transform.position = centerCardPos.position;
+        cardsInDeck[0].transform.position = pos.position;
         cardsInDeck.RemoveAt(0);
-    }
 
-    private void DrawPlayerCards()
-    {
-        for (int i = 0; i < 5; i++)
-        {
-            Debug.Log(deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
-            playerDrawnCard = deckCardsData[0];
-            deckCardsData.RemoveAt(0);
-
-            cardsInDeck[0].transform.position = playerCardPos[i].position;
-            cardsInDeck.RemoveAt(0);
-        }
+        return card;
     }
 }
