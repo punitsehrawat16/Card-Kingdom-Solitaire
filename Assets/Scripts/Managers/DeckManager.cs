@@ -8,6 +8,8 @@ using Random = UnityEngine.Random;
 
 public class DeckManager : MonoBehaviour
 {
+    // event for letting player know how much cards are in the deck
+    public static event Action<int> OnRemainingCard; // doesn't count the cards which are on the table already
     
     [Header("Cards Visuals")]
     [SerializeField] private List<Sprite> spriteCards = new List<Sprite>(); 
@@ -23,12 +25,10 @@ public class DeckManager : MonoBehaviour
     [SerializeField] private GameObject cardPrefab;
     
     
-    private void Start()
+    private void Awake()
     {
         deckCardsData.Clear();
         cardsInDeck.Clear();
-        
-        
     }
 
     public void CreateAndShuffleDeck()
@@ -68,27 +68,27 @@ public class DeckManager : MonoBehaviour
         {
             int randomIndex = Random.Range(0, i + 1);
 
-            CardData temp = deckCardsData[i];
+            var temp = deckCardsData[i];
             deckCardsData[i] = deckCardsData[randomIndex];
             deckCardsData[randomIndex] = temp;
 
-            GameObject tempObj = cardsInDeck[i];
+            var tempObj = cardsInDeck[i];
             cardsInDeck[i] = cardsInDeck[randomIndex];
             cardsInDeck[randomIndex] = tempObj;
         }
-        Debug.Log(" Top Card After Shuffle: "+deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
+        //Debug.Log(" Top Card After Shuffle: "+deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
 
     }
 
     public Card DrawTopCard(Transform pos)
     {
-        //CardData cardData = deckCardsData[0];
         var card = cardsInDeck[0].GetComponent<Card>();
         deckCardsData.RemoveAt(0);
        
         cardsInDeck[0].transform.position = pos.position;
         cardsInDeck.RemoveAt(0);
-
+        
+        OnRemainingCard?.Invoke(deckCardsData.Count);
         return card;
     }
 }

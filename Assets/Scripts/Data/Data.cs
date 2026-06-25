@@ -29,9 +29,3 @@ public struct CardData
     public Rank Rank;
 }
 
-[System.Serializable]
-public struct CardsInHandData
-{
-    public CardData CardData;
-   // public GameObject CardObj;
-}
