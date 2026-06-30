@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -16,24 +17,23 @@ public class DeckManager : MonoBehaviour
     
     
     [Header("Cards Data")] 
-    [SerializeField] private  List<CardData> deckCardsData = new List<CardData>();
     [SerializeField] private List<GameObject> cardsInDeck = new List<GameObject>();
+    [SerializeField] private List<GameObject> totalCards = new List<GameObject>();
     
     
     [Header("Cards Relevant")]
     [SerializeField] private GameObject cardHolder;
     [SerializeField] private GameObject cardPrefab;
-    
-    
-    private void Awake()
+
+    public void StartCreatingDeck()
     {
-        deckCardsData.Clear();
+    //    deckCardsData.Clear();
         cardsInDeck.Clear();
+        CreateDeck();
     }
 
-    public void CreateAndShuffleDeck()
+    public void StartShufflingDeck()
     {
-        CreateDeck();
         ShufflingDeck();
     }
     private void CreateDeck()
@@ -46,49 +46,58 @@ public class DeckManager : MonoBehaviour
                 CardData cardData = new CardData();
                 cardData.Suits = s;
                 cardData.Rank = r;
-                deckCardsData.Add(cardData);
-                
-                string str = cardData.Suits.ToString() +" "+ cardData.Rank.ToString();
                 
                 GameObject card = Instantiate(cardPrefab,cardHolder.transform);
+                
                 Sprite sr = spriteCards[cardIndex];
+                
                 Card _card = card.GetComponent<Card>();
                 if(_card != null)
                     _card.CardInitialise(cardData,sr);
+                
+                string str = cardData.Suits.ToString() +" "+ cardData.Rank.ToString();
                 card.name = str;
+                
                 cardIndex++;
+                
                 cardsInDeck.Add(card);
+                totalCards.Add(card);
             }
         }
     }
     
     private void ShufflingDeck()
     {
-        for (int i = deckCardsData.Count - 1; i > 0; i--)
+        for (int i = cardsInDeck.Count - 1; i > 0; i--)
         {
             int randomIndex = Random.Range(0, i + 1);
-
-            var temp = deckCardsData[i];
-            deckCardsData[i] = deckCardsData[randomIndex];
-            deckCardsData[randomIndex] = temp;
 
             var tempObj = cardsInDeck[i];
             cardsInDeck[i] = cardsInDeck[randomIndex];
             cardsInDeck[randomIndex] = tempObj;
         }
-        //Debug.Log(" Top Card After Shuffle: "+deckCardsData[0].Rank+" "+deckCardsData[0].Suits);
-
     }
 
     public Card DrawTopCard(Transform pos)
     {
         var card = cardsInDeck[0].GetComponent<Card>();
-        deckCardsData.RemoveAt(0);
-       
-        cardsInDeck[0].transform.position = pos.position;
+        
+        cardsInDeck[0].transform.DOMove(pos.position,.25f).SetEase(Ease.OutCubic);
         cardsInDeck.RemoveAt(0);
         
-        OnRemainingCard?.Invoke(deckCardsData.Count);
+        OnRemainingCard?.Invoke(cardsInDeck.Count);
         return card;
+    }
+
+    private void ResetDeck()
+    {
+        foreach (var card in totalCards )
+        {
+            card.transform.position = cardHolder.transform.position;
+            card.transform.SetParent(cardHolder.transform);
+            card.gameObject.SetActive(true);
+        }
+        cardsInDeck = null;
+        totalCards = cardsInDeck;
     }
 }
