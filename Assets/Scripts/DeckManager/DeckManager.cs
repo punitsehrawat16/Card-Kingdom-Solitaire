@@ -11,7 +11,6 @@ public class DeckManager : MonoBehaviour
 {
     // event for letting player know how much cards are in the deck
     public static event Action<int> OnRemainingCard; // doesn't count the cards which are on the table already
-    
     [Header("Cards Visuals")]
     [SerializeField] private List<Sprite> spriteCards = new List<Sprite>(); 
     
@@ -25,9 +24,29 @@ public class DeckManager : MonoBehaviour
     [SerializeField] private GameObject cardHolder;
     [SerializeField] private GameObject cardPrefab;
 
+    
+    
+    private void OnEnable()
+    {
+        GameState.OnGameStateChanged += HandleState;
+    }
+
+    private void OnDisable()
+    {
+        GameState.OnGameStateChanged -= HandleState;
+    }
+
+    private void HandleState(GameStates state)
+    {
+        if(state == GameStates.Playing)
+            cardHolder.SetActive(true);
+        else
+            cardHolder.SetActive(false);
+    }
+    
     public void StartCreatingDeck()
     {
-    //    deckCardsData.Clear();
+        totalCards.Clear();
         cardsInDeck.Clear();
         CreateDeck();
     }
@@ -36,6 +55,7 @@ public class DeckManager : MonoBehaviour
     {
         ShufflingDeck();
     }
+    
     private void CreateDeck()
     {
         int cardIndex = 0; // for sprites 
@@ -89,15 +109,20 @@ public class DeckManager : MonoBehaviour
         return card;
     }
 
+    public void ResetDeckData()
+    {
+        ResetDeck();
+    }
     private void ResetDeck()
     {
+        cardsInDeck.Clear();
         foreach (var card in totalCards )
         {
             card.transform.position = cardHolder.transform.position;
             card.transform.SetParent(cardHolder.transform);
             card.gameObject.SetActive(true);
         }
-        cardsInDeck = null;
-        totalCards = cardsInDeck;
+        cardsInDeck.Clear();
+        cardsInDeck = new List<GameObject>(totalCards);
     }
 }

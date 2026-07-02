@@ -1,15 +1,13 @@
-using System;
 using UnityEngine;
-using System.Collections.Generic;
+using System;
 using DG.Tweening;
-using UnityEngine.Serialization;
 
-public class GameManager : MonoBehaviour
+public class TableManager : MonoBehaviour
 {
     // events
+    public static event Action<string> OnTableNotification;  // for player's awareness,if player makes moves which aren't valid
     public static event Action OnCorrectCard;    // for score manager, increment score
-    public static event Action<string> OnErrorNotification;  // for player's awareness,if player makes moves which aren't valid
-    public static event Action<string> OnGameNotification;  
+    
     
     [Header("Center Card")] 
     [SerializeField] private Card _centerCard;
@@ -17,14 +15,17 @@ public class GameManager : MonoBehaviour
     
     [Header("References")] 
     [SerializeField] private DeckManager _deckManager;
-
+    [SerializeField] private GameRules _gameRules;
+    
     [Header("Player Card")]
     [SerializeField] private Transform[] _playerCardSlot = new Transform[5];
     [SerializeField] private Card[] cardsInHand = new Card[5];
-
+    
     // other
     private int _remainingCards;
     
+    public Card CenterCard => _centerCard;
+    public Card[] HandCards => cardsInHand;
     private void OnEnable()
     {
         Card.CardClicked += PlayingCard;
@@ -37,42 +38,35 @@ public class GameManager : MonoBehaviour
         DeckManager.OnRemainingCard -= GetRemainingCards;
     }
 
-    public async void OnStartInitialiseTheDeck()
-    { 
-        GameState.ChangeState(GameStates.Loading);
-        await Awaitable.WaitForSecondsAsync(2);
-        CreateDeck();
-        GameState.ChangeState(GameStates.Menu);
-    }
-    public async void OnGameStart()          // match start
+    
+    public void  OnGameStart()          // match start
     {
-        GameState.ChangeState(GameStates.Loading);
         ShuffleTheDeck();
-        await Awaitable.WaitForSecondsAsync(1);
-        GameState.ChangeState(GameStates.Playing);
-        await Awaitable.WaitForSecondsAsync(.5f);
         DrawCenterCard();
         DrawPlayerHandCards();
     }
 
-    private void Reset() // for replaying the game or if on start if cards which are drawn to player are not valid to play
+    public void PreparingNewMatch() // for replaying the game or if on start if cards which are drawn to player are not valid to play
     {
+        _deckManager.ResetDeckData();
         _centerCard = null;
-        cardsInHand = null;
-        ShuffleTheDeck();
+        //await Awaitable.NextFrameAsync();
+        _deckManager.StartShufflingDeck();
+       // await Awaitable.NextFrameAsync();
         DrawCenterCard();
         DrawPlayerHandCards();
     }
-    private void CreateDeck()
-    {
-        _deckManager.StartCreatingDeck();
-    }
+    
 
     private void ShuffleTheDeck()
     {
         _deckManager.StartShufflingDeck();
     }
-    
+    // fetch cards count from deck
+    private void GetRemainingCards(int cards)
+    {
+        _remainingCards = cards;
+    }
     private void DrawCenterCard()
     {
         _centerCard = _deckManager.DrawTopCard(_centerCardPos);
@@ -88,17 +82,10 @@ public class GameManager : MonoBehaviour
             cardsInHand[i] = card;
             card.CardInteraction(true);
         }
-
-        if (CheckGameOver())
-        {
-            Reset();
-        }
     }
-
-
     private void PlayingCard(Card card)
     {
-        bool isValid = CheckForEligibility(card);
+        bool isValid = _gameRules.CheckForEligibility(card);
         
         if(!isValid)
             return;
@@ -111,19 +98,24 @@ public class GameManager : MonoBehaviour
         _centerCard.CardInteraction(false);
             
         OnCorrectCard?.Invoke();
-        OnGameNotification?.Invoke("+10 Points");
+        
+        
+        _gameRules.GameChecker();
     }
     public void GetNewCard()
     {
         DrawPlayerNewCard();
-    }
-
-    private void DrawPlayerNewCard()
+    }private void DrawPlayerNewCard()
     {
+        if (_remainingCards <= 0)
+        {
+            OnTableNotification?.Invoke("All cards are drawn");
+            return;
+        }
         int emptySlot = FindEmptySlot(); // checks that player can draw another card & find empty slot
         if (emptySlot == -1)
         {
-            OnErrorNotification?.Invoke("Hand is full. Play a valid card before drawing another.");
+            OnTableNotification?.Invoke("Hand is full. Play a valid card before drawing another.");
             return;
         }
         
@@ -131,7 +123,7 @@ public class GameManager : MonoBehaviour
         cardsInHand[emptySlot] = card;
         card.CardInteraction(true);
         
-        GameChecker();                             // check whether game is ended or completed
+        _gameRules.GameChecker();                             // check whether game is ended or completed
     }
     private int FindEmptySlot()
     {
@@ -156,49 +148,4 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    // game rule
-    private bool CheckForEligibility(Card card)
-    {
-        if (_centerCard.cardData.Rank < card.cardData.Rank || _centerCard.cardData.Suits == card.cardData.Suits) 
-            return true;
-        
-        OnErrorNotification?.Invoke("Play a card with the same suit or a higher rank.");
-        return false;
-    }
-    // game win/loss
-    private bool CheckGameOver()
-    {
-        for (int i = 0; i < cardsInHand.Length; i++)
-        {
-            if(cardsInHand[i] == null )
-                continue;
-            
-            if(cardsInHand[i].cardData.Rank > _centerCard.cardData.Rank || cardsInHand[i].cardData.Suits.Equals(_centerCard.cardData.Suits)) 
-                return false;
-        }
-
-        return true;
-    }
-
-    private bool CheckGameWon()
-    {
-        if(_remainingCards == 0 && cardsInHand == null)
-            return true;
-
-        return false;
-    }
-    private void GameChecker()
-    {
-        if(CheckGameOver())
-            OnGameNotification?.Invoke("Game Over! No more possible moves");
-
-        if(CheckGameWon())
-            OnGameNotification?.Invoke("You Won!");
-    }
-    // fetch cards count from deck
-    private void GetRemainingCards(int cards)
-    {
-        _remainingCards = cards;
-    }
-    
 }

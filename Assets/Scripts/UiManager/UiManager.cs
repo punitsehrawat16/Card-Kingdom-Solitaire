@@ -25,20 +25,20 @@ public class UiManager : MonoBehaviour
     
     private void OnEnable()
     {
-        ScoreManager.OnScoreIncreased += ScoreUi;
-        ScoreManager.OnHighScoreIncreased += HighScoreUi;
+        ScoreManager.OnScoreChanged += ScoreUi;
+        ScoreManager.OnHighScoreChanged += HighScoreUi;
         DeckManager.OnRemainingCard += CardsInDeckUi;
-        GameManager.OnErrorNotification += ErrorMessage;
-        GameManager.OnGameNotification += GameMessage;
+        TableManager.OnTableNotification += TableMessage;
+        GameRules.OnGameRulesNotification += GameMessage;
     }
 
     private void OnDisable()
     {
-        ScoreManager.OnScoreIncreased -= ScoreUi;
-        ScoreManager.OnHighScoreIncreased -= HighScoreUi;
+        ScoreManager.OnScoreChanged -= ScoreUi;
+        ScoreManager.OnHighScoreChanged -= HighScoreUi;
         DeckManager.OnRemainingCard -= CardsInDeckUi;
-        GameManager.OnErrorNotification -= ErrorMessage;
-        GameManager.OnGameNotification+= GameMessage;
+        TableManager.OnTableNotification -= TableMessage;
+        GameRules.OnGameRulesNotification += GameMessage;
 
         if (_errorRoutine != null)
             StopCoroutine(_errorRoutine);
@@ -66,7 +66,7 @@ public class UiManager : MonoBehaviour
         yield return new WaitForSeconds(_durationOfMessage);
         _gameMessage.text = null;
     }
-    private void ErrorMessage(string message)
+    private void TableMessage(string message)
     {
         if (_errorRoutine != null)
             StopCoroutine(_errorRoutine);

@@ -13,7 +13,7 @@ public class GameManagerUi : MonoBehaviour
     [SerializeField] private GameObject _pausePanel;
     [SerializeField] private GameObject _winPanel;
     [SerializeField] private GameObject _gameOverPanel;
-
+    private bool gameStarted = false;
     private void OnEnable()
     {
         GameState.OnGameStateChanged += HandleState;
@@ -36,9 +36,34 @@ public class GameManagerUi : MonoBehaviour
 
     public void OnGameStart() // from menu to match start
     {
-        _gameManager.OnGameStart();
+        if (!gameStarted)
+        {
+            gameStarted = true;
+            _gameManager.PlayFirstMatch();
+        }
+        else
+            _gameManager.GameReplay();
     }
 
+    public void OnGamePause()
+    {
+        _gameManager.GamePause();
+    }
+
+    public void OnGameResume()
+    {
+        _gameManager.GameResume();
+    }
+
+    public void OnGameRestart()
+    {
+        _gameManager.GameReplay();
+    }
+
+    public void OnGameMenu()
+    {
+        _gameManager.GameMenu();
+    }
     private void HandleState(GameStates states)
     {
         switch (states)
